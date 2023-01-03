@@ -39,31 +39,10 @@ extern "C"
 
 #include "fqueue.h"
 
-#ifdef _WIN32
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#include <winsock2.h>
-#else
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-typedef int SOCKET;
-#endif
 
 using nlohmann::json;
 
-inline auto GetSize(const AVPacket& packet) { return packet.size; }
-
 inline auto GetSize(const rtc::binary& packet) { return packet.size(); }
-
-
-bool is_video_stream(const AVStream * stream) {
-	if (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-		return true;
-	}
-
-	return false;
-}
-
 
 struct AVFrameDeleter
 {
@@ -72,13 +51,12 @@ struct AVFrameDeleter
 
 using AVFramePtr = std::unique_ptr<AVFrame, AVFrameDeleter>;
 
-//*
+
 struct VideoQueue
 {
 	FQueue<rtc::binary, 15 * 1024 * 1024, 500> mQueue;
 	rtc::binary mBuffer;
 };
-
 
 
 int read_raw_packet(void *opaque, uint8_t *buf, int buf_size)
@@ -144,10 +122,6 @@ int main() {
 		auto session = std::make_shared<rtc::RtcpReceivingSession>();
 		track->setMediaHandler(session);
 
-		uint8_t *buf = nullptr;
-
-		enum { RECVBUF_SIZE = 10 * 8192 };
-
 		track->onMessage(
 			[&videoQueue](rtc::binary message) {
 				videoQueue.mQueue.push(message);
@@ -169,16 +143,6 @@ int main() {
 		rtc::Description answer(sdpClause, j["type"].get<std::string>());
 		pc->setRemoteDescription(answer);
 
-		//std::string osFName;
-
-		//{
-		//	std::ofstream os;
-		//	do {
-		//		osFName = std::tmpnam(nullptr);
-		//	} while (os.open(osFName), !os);
-		//	os << sdpClause;
-		//}
-
 		// https://blog.kevmo314.com/custom-rtp-io-with-ffmpeg.html
 		AVInputFormat *file_iformat = av_find_input_format("sdp");
 		AVFormatContext *ic = avformat_alloc_context();
@@ -190,8 +154,6 @@ int main() {
 		std::string url = "data:text/plain;charset=UTF-8," + sdpClause;
 
 		int error = avformat_open_input(&ic,
-			//"C:/temp/video.sdp",
-			//osFName.c_str(),
 			url.c_str(),
 			file_iformat,
 			&format_opts);
@@ -202,12 +164,9 @@ int main() {
 
 		ic->pb = avio_in;
 
-		//ic->flags |= AVFMT_FLAG_CUSTOM_IO;
 		ic->iformat = file_iformat;
 
-
 		error = avformat_find_stream_info(ic, nullptr);
-
 
 		const auto streamNumber = av_find_best_stream(ic, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
 
@@ -302,8 +261,6 @@ int main() {
 		//ic->pb = nullptr;
 		avformat_close_input(&ic);
 
-		//error = std::remove(osFName.c_str());
-		//std::cout << "Temp file close error: " << error << std::endl;
 	} catch (const std::exception &e) {
 		std::cerr << "Error: " << e.what() << std::endl;
 	}
