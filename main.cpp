@@ -169,15 +169,15 @@ int main() {
 		rtc::Description answer(sdpClause, j["type"].get<std::string>());
 		pc->setRemoteDescription(answer);
 
-		std::string osFName;
+		//std::string osFName;
 
-		{
-			std::ofstream os;
-			do {
-				osFName = std::tmpnam(nullptr);
-			} while (os.open(osFName), !os);
-			os << sdpClause;
-		}
+		//{
+		//	std::ofstream os;
+		//	do {
+		//		osFName = std::tmpnam(nullptr);
+		//	} while (os.open(osFName), !os);
+		//	os << sdpClause;
+		//}
 
 		// https://blog.kevmo314.com/custom-rtp-io-with-ffmpeg.html
 		AVInputFormat *file_iformat = av_find_input_format("sdp");
@@ -187,9 +187,12 @@ int main() {
 
 		av_dict_set_int(&format_opts, "reorder_queue_size", 0, 0);
 
+		std::string url = "data:text/plain;charset=UTF-8," + sdpClause;
+
 		int error = avformat_open_input(&ic,
 			//"C:/temp/video.sdp",
-			osFName.c_str(), 
+			//osFName.c_str(),
+			url.c_str(),
 			file_iformat,
 			&format_opts);
 
@@ -299,8 +302,8 @@ int main() {
 		//ic->pb = nullptr;
 		avformat_close_input(&ic);
 
-		error = std::remove(osFName.c_str());
-		std::cout << "Temp file close error: " << error << std::endl;
+		//error = std::remove(osFName.c_str());
+		//std::cout << "Temp file close error: " << error << std::endl;
 	} catch (const std::exception &e) {
 		std::cerr << "Error: " << e.what() << std::endl;
 	}
