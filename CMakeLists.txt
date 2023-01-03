@@ -34,9 +34,9 @@ set(MEDIA_UWP_RESOURCES
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-	add_executable(datachannel-media-receiver-v2 main.cpp zm_sdp.cpp zm_rtp_source.cpp rtpdec.cpp rtpdec_h264.cpp ${MEDIA_UWP_RESOURCES})
+	add_executable(datachannel-media-receiver-v2 main.cpp ${MEDIA_UWP_RESOURCES})
 else()
-	add_executable(datachannel-media-receiver-v2 main.cpp zm_sdp.cpp zm_rtp_source.cpp rtpdec.cpp rtpdec_h264.cpp)
+	add_executable(datachannel-media-receiver-v2 main.cpp )
 endif()
 
 set_target_properties(datachannel-media-receiver-v2 PROPERTIES
