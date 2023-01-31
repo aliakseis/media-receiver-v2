@@ -149,8 +149,9 @@ int main() {
 		AVDictionary *format_opts = NULL;
 		av_dict_set(&format_opts, "sdp_flags", "custom_io", 0);
 
-		av_dict_set_int(&format_opts, "reorder_queue_size", 0, 0);
+		//av_dict_set_int(&format_opts, "reorder_queue_size", 0, 0);
 
+		// https://ffmpeg.org/ffmpeg-protocols.html#data
 		std::string url = "data:text/plain;charset=UTF-8," + sdpClause;
 
 		int error = avformat_open_input(&ic,
